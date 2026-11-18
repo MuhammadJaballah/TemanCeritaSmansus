@@ -1,97 +1,48 @@
 <?php
-
 namespace App\Http\Controllers\GuruBk;
 
 use App\Http\Controllers\Controller;
-use App\Models\JadwalKonseling;
-use App\Http\Requests\GuruBk\StoreJadwalRequest;
+use App\Models\Guru;
+use App\Models\JadwalMingguan;
+use App\Services\JadwalTetap;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class JadwalController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, JadwalTetap $service)
     {
-        $guruId = auth()->user()->guru->id;
-        
-        // Ambil semua jadwal untuk guru ini, urutkan berdasarkan tanggal & jam
-        $jadwals = JadwalKonseling::where('guru_id', $guruId)
-            ->where('tanggal', '>=', date('Y-m-d'))
-            ->orderBy('tanggal', 'asc')
-            ->orderBy('jam_mulai', 'asc')
-            ->get();
-
-        // Kelompokkan berdasarkan tanggal
-        $groupedJadwals = $jadwals->groupBy('tanggal');
-        
-        // Tanggal yang sedang aktif (bisa dari request atau tanggal terdekat yang ada jadwalnya)
-        $activeDate = $request->query('date');
-        if (!$activeDate && $groupedJadwals->count() > 0) {
-            $activeDate = $groupedJadwals->keys()->first();
-        }
-
-        return view('GuruBk.KetersediaanJadwal.Index', compact('groupedJadwals', 'activeDate'));
+        $guruId = $request->user()->guru->id;
+        $mingguan = JadwalMingguan::where('guru_id', $guruId)->orderBy('hari')->orderBy('jam_mulai')->get();
+        $jadwals = $service->jadwalTerisi()->with('bookingKonselings.siswa')->where('guru_id', $guruId)
+            ->whereDate('tanggal', '>=', now(JadwalTetap::TIMEZONE)->toDateString())->orderBy('tanggal')->orderBy('jam_mulai')->get();
+        return view('GuruBk.KetersediaanJadwal.Index', compact('mingguan', 'jadwals'));
     }
 
-    public function store(StoreJadwalRequest $request)
+    public function store(Request $request, JadwalTetap $service)
     {
-        $validated = $request->validated();
-        
-        JadwalKonseling::create([
-            'guru_id' => auth()->user()->guru->id,
-            'tanggal' => $validated['tanggal'],
-            'jam_mulai' => $validated['jam_mulai'],
-            'jam_selesai' => $validated['jam_selesai'],
-            'status' => 'tersedia'
-        ]);
-
-        // Setelah sukses simpan, redirect kembali ke halaman index dengan tab tanggal tersebut aktif
-        return redirect()->route('guru.jadwal.index', ['date' => $validated['tanggal']])
-            ->with('success', 'Ketersediaan jadwal berhasil ditambahkan.');
-    }
-    public function update(StoreJadwalRequest $request, $id)
-    {
-        $jadwal = JadwalKonseling::where('guru_id', auth()->user()->guru->id)->findOrFail($id);
-        $validated = $request->validated();
-
-        $jadwal->update([
-            'tanggal' => $validated['tanggal'],
-            'jam_mulai' => $validated['jam_mulai'],
-            'jam_selesai' => $validated['jam_selesai'],
-        ]);
-
-        return redirect()->route('guru.jadwal.index', ['date' => $validated['tanggal']])
-            ->with('success', 'Jadwal berhasil diperbarui.');
+        $data = $request->validate(['hari' => 'required|integer|between:1,5', 'jam_mulai' => 'required|date_format:H:i|before_or_equal:23:14']);
+        DB::transaction(function () use ($request, $data, $service) {
+            $guru = Guru::whereKey($request->user()->guru->id)->lockForUpdate()->firstOrFail();
+            $existing = JadwalMingguan::where('guru_id', $guru->id)->where('hari', $data['hari'])->get();
+            $start = $data['jam_mulai'];
+            $end = $service->selesai($start);
+            if ($existing->contains(fn ($slot) => substr($slot->jam_mulai, 0, 5) < $end && $service->selesai(substr($slot->jam_mulai, 0, 5)) > $start)) {
+                throw ValidationException::withMessages(['jam_mulai' => 'Waktu ini bertabrakan dengan jadwal mingguan yang sudah ada.']);
+            }
+            JadwalMingguan::create(['guru_id' => $guru->id, 'hari' => $data['hari'], 'jam_mulai' => $start]);
+        });
+        return back()->with('success', 'Jadwal mingguan berhasil ditambahkan.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $jadwal = JadwalKonseling::where('guru_id', auth()->user()->guru->id)->findOrFail($id);
-        $date = $jadwal->tanggal;
-        $jadwal->delete();
-
-        return redirect()->route('guru.jadwal.index', ['date' => $date])
-            ->with('success', 'Jadwal berhasil dihapus.');
-    }
-
-    public function updateDate(Request $request, $date)
-    {
-        $request->validate(['tanggal' => 'required|date']);
-        
-        JadwalKonseling::where('guru_id', auth()->user()->guru->id)
-            ->where('tanggal', $date)
-            ->update(['tanggal' => $request->tanggal]);
-
-        return redirect()->route('guru.jadwal.index', ['date' => $request->tanggal])
-            ->with('success', 'Tanggal jadwal berhasil diperbarui.');
-    }
-
-    public function destroyDate($date)
-    {
-        JadwalKonseling::where('guru_id', auth()->user()->guru->id)
-            ->where('tanggal', $date)
-            ->delete();
-
-        return redirect()->route('guru.jadwal.index')
-            ->with('success', 'Semua jadwal pada tanggal tersebut berhasil dihapus.');
+        DB::transaction(function () use ($request, $id) {
+            $guruId = $request->user()->guru->id;
+            Guru::whereKey($guruId)->lockForUpdate()->firstOrFail();
+            JadwalMingguan::where('guru_id', $guruId)->findOrFail($id)->delete();
+        });
+        return back()->with('success', 'Jadwal mingguan dihapus. Pengajuan yang sudah ada tetap tersimpan.');
     }
 }

@@ -7,9 +7,16 @@ use App\Models\BookingKonseling;
 use App\Models\JadwalKonseling;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\Guru;
 
 class PengajuanKonselingController extends Controller
 {
+    public function jumlahBaru()
+    {
+        return response()->json(['jumlah' => BookingKonseling::baruUntukGuru(Auth::user()->guru->id)->count()]);
+    }
+
     /**
      * Display a listing of the counseling requests.
      */
@@ -26,6 +33,14 @@ class PengajuanKonselingController extends Controller
             ->latest()
             ->get();
 
+        // Tandai hanya pengajuan yang benar-benar masuk ke daftar ini.
+        $dilihat = $pengajuans->map(fn ($pengajuan) => [
+            'booking_id' => $pengajuan->id, 'guru_id' => $guruId, 'dilihat_at' => now(),
+        ])->all();
+        if ($dilihat) {
+            DB::table('pengajuan_dilihat_guru')->insertOrIgnore($dilihat);
+        }
+
         return view('GuruBk.PengajuanKonseling.Index', compact('pengajuans'));
     }
 
@@ -34,17 +49,14 @@ class PengajuanKonselingController extends Controller
      */
     public function terima(Request $request, $id)
     {
-        $booking = BookingKonseling::findOrFail($id);
-        
-        // Pastikan jadwal ini milik guru yang sedang login
-        if ($booking->jadwal->guru_id !== Auth::user()->guru->id) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        // Ubah status jadwal menjadi disetujui
-        $booking->jadwal->update([
-            'status' => 'disetujui'
-        ]);
+        DB::transaction(function () use ($id) {
+            $guruId = Auth::user()->guru->id;
+            Guru::whereKey($guruId)->lockForUpdate()->firstOrFail();
+            $booking = BookingKonseling::with('jadwal')->findOrFail($id);
+            abort_unless($booking->jadwal->guru_id === $guruId, 403);
+            abort_unless($booking->jadwal->status === 'menunggu', 422, 'Pengajuan sudah diproses.');
+            $booking->jadwal->update(['status' => 'disetujui']);
+        });
 
         return redirect()->route('guru.pengajuan.index')
             ->with('success', 'Pengajuan konseling berhasil diterima.');
@@ -55,24 +67,18 @@ class PengajuanKonselingController extends Controller
      */
     public function tolak(Request $request, $id)
     {
-        $booking = BookingKonseling::findOrFail($id);
-        
-        // Pastikan jadwal ini milik guru yang sedang login
-        if ($booking->jadwal->guru_id !== Auth::user()->guru->id) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $jadwal = $booking->jadwal;
-
-        // Hapus data booking (karena ditolak)
-        $booking->delete();
-
-        // Kembalikan status jadwal menjadi tersedia agar siswa lain bisa memesan
-        $jadwal->update([
-            'status' => 'tersedia'
-        ]);
+        $data = $request->validate(['alasan_penolakan' => 'required|string|max:2000']);
+        DB::transaction(function () use ($id, $data) {
+            $guruId = Auth::user()->guru->id;
+            Guru::whereKey($guruId)->lockForUpdate()->firstOrFail();
+            $booking = BookingKonseling::with('jadwal')->findOrFail($id);
+            abort_unless($booking->jadwal->guru_id === $guruId, 403);
+            abort_unless($booking->jadwal->status === 'menunggu', 422, 'Pengajuan sudah diproses.');
+            $booking->update(['alasan_penolakan' => $data['alasan_penolakan']]);
+            $booking->jadwal->update(['status' => 'ditolak']);
+        });
 
         return redirect()->route('guru.pengajuan.index')
-            ->with('success', 'Pengajuan konseling berhasil ditolak dan dibatalkan.');
+            ->with('success', 'Pengajuan ditolak dan alasan disampaikan kepada siswa.');
     }
 }

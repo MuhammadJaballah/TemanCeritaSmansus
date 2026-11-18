@@ -23,6 +23,9 @@ class StoreGuruRequest extends FormRequest
             'nama_lengkap' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'nip' => 'nullable|string|max:255',
+            'bidang_keahlian' => 'nullable|string|max:255',
+            'alamat' => 'nullable|string|max:1000',
+            'no_hp' => 'nullable|string|max:30',
             'password' => 'required|min:8'
         ];
     }

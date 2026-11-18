@@ -178,30 +178,88 @@ class DatabaseSeeder extends Seeder
         // 6. Prediksi Jurusan (Machine Learning mock data)
         DB::table('prediksi_jurusans')->insert([
             'siswa_id' => $siswa1->id,
+            'jalur' => 'MIPA',
             'input_nilai' => json_encode([
-                'matematika' => 85,
-                'bahasa_indonesia' => 88,
+                'agama' => 90,
+                'pkn' => 88,
+                'b_indo' => 88,
+                'mtk_umum' => 87,
+                'sejarah_indonesia' => 85,
                 'bahasa_inggris' => 90,
-                'fisika' => 82,
-                'kimia' => 80,
-                'biologi' => 78
+                'seni_budaya' => 87,
+                'pjok' => 86,
+                'prakarya' => 88,
+                'bmr' => 86,
+                'matematika_peminatan' => 89,
+                'fisika' => 86,
+                'kimia' => 84,
+                'biologi' => 82
             ]),
-            'rekomendasi' => 'Teknik Informatika, Sistem Informasi',
+            'rekomendasi' => 'Teknik Informatika (92.0%), Sistem Informasi (88.0%), Manajemen (78.0%)',
+            'hasil_detail' => json_encode([
+                [
+                    'rank' => 1,
+                    'category' => 'Teknik Informatika',
+                    'confidence_percentage' => 92,
+                    'popular_majors_sample' => ['Teknik Informatika', 'Ilmu Komputer', 'Rekayasa Perangkat Lunak']
+                ],
+                [
+                    'rank' => 2,
+                    'category' => 'Sistem Informasi',
+                    'confidence_percentage' => 88,
+                    'popular_majors_sample' => ['Sistem Informasi', 'Teknologi Informasi', 'Sains Data']
+                ],
+                [
+                    'rank' => 3,
+                    'category' => 'Manajemen',
+                    'confidence_percentage' => 78,
+                    'popular_majors_sample' => ['Manajemen', 'Bisnis Digital', 'Teknik Industri']
+                ]
+            ]),
             'created_at' => now(),
             'updated_at' => now()
         ]);
         
         DB::table('prediksi_jurusans')->insert([
             'siswa_id' => $siswa2->id,
+            'jalur' => 'IPS',
             'input_nilai' => json_encode([
-                'matematika' => 75,
-                'bahasa_indonesia' => 92,
-                'bahasa_inggris' => 88,
-                'ekonomi' => 90,
-                'sosiologi' => 85,
-                'geografi' => 80
+                'agama' => 90,
+                'pkn' => 88,
+                'b_indo' => 92,
+                'mtk_umum' => 80,
+                'sejarah_indonesia' => 87,
+                'bahasa_inggris' => 89,
+                'seni_budaya' => 86,
+                'pjok' => 85,
+                'prakarya' => 88,
+                'bmr' => 86,
+                'geografi' => 84,
+                'sejarah_peminatan' => 88,
+                'sosiologi' => 90,
+                'ekonomi' => 91
             ]),
-            'rekomendasi' => 'Manajemen, Akuntansi, Ilmu Komunikasi',
+            'rekomendasi' => 'Manajemen (91.0%), Akuntansi (86.0%), Ilmu Komunikasi (79.0%)',
+            'hasil_detail' => json_encode([
+                [
+                    'rank' => 1,
+                    'category' => 'Manajemen',
+                    'confidence_percentage' => 91,
+                    'popular_majors_sample' => ['Manajemen', 'Administrasi Bisnis', 'Kewirausahaan']
+                ],
+                [
+                    'rank' => 2,
+                    'category' => 'Akuntansi',
+                    'confidence_percentage' => 86,
+                    'popular_majors_sample' => ['Akuntansi', 'Ilmu Ekonomi', 'Perbankan']
+                ],
+                [
+                    'rank' => 3,
+                    'category' => 'Ilmu Komunikasi',
+                    'confidence_percentage' => 79,
+                    'popular_majors_sample' => ['Ilmu Komunikasi', 'Hubungan Internasional', 'Sosiologi']
+                ]
+            ]),
             'created_at' => now(),
             'updated_at' => now()
         ]);

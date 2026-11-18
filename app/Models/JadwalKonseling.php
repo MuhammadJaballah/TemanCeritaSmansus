@@ -15,6 +15,6 @@ class JadwalKonseling extends Model
 
     public function bookingKonselings()
     {
-        return $this->hasMany(BookingKonseling::class);
+        return $this->hasMany(BookingKonseling::class, 'jadwal_id');
     }
 }

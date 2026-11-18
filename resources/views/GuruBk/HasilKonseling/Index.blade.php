@@ -11,15 +11,16 @@
                 <button class="p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
                     <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                 </button>
-                <button class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Aksi Cepat
-                </button>
             </div>
         </div>
     </x-slot>
 
     <div class="py-6 space-y-6">
+        <div class="flex justify-end">
+            <a href="{{ route('guru.hasil.export') }}" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                Unduh Data Konseling (CSV)
+            </a>
+        </div>
         @if(session('success'))
             <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg relative" role="alert">
                 <span class="block sm:inline">{{ session('success') }}</span>
@@ -49,23 +50,18 @@
                     
                     <!-- Pilih Jadwal -->
                     <div class="mb-5">
-                        <label for="booking_id" class="block text-sm font-medium text-gray-700 mb-2">Pilih Jadwal Selesai <span class="text-red-500">*</span></label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            </div>
-                            <select name="booking_id" id="booking_id" required class="block w-full pl-10 pr-10 py-3 text-base border-gray-200 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-xl bg-gray-50 text-gray-700 appearance-none">
-                                <option value="" disabled selected>-- Pilih Jadwal Konseling --</option>
+                        <label for="booking_id" class="block text-sm font-medium text-gray-700 mb-2">Pilih Sesi Konseling <span class="text-red-500">*</span></label>
+                        <div>
+                            <select name="booking_id" id="booking_id" required class="block w-full rounded-xl border-gray-200 bg-gray-50 text-sm text-gray-700">
+                                <option value="" disabled selected>Pilih sesi konseling</option>
                                 @foreach($menungguInput as $booking)
                                     <option value="{{ $booking->id }}">
-                                        {{ $booking->siswa->nama_lengkap }} - {{ \Carbon\Carbon::parse($booking->jadwal->tanggal)->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($booking->jadwal->jam_mulai)->format('H:i') }} (Selesai)
+                                        {{ $booking->siswa->nama_lengkap }} · {{ \Carbon\Carbon::parse($booking->jadwal->tanggal)->locale('id')->translatedFormat('d M Y') }} · {{ \Carbon\Carbon::parse($booking->jadwal->jam_mulai)->format('H:i') }} WIB
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
                         </div>
+                        @if($menungguInput->isEmpty())<p class="mt-2 text-xs text-gray-500">Belum ada sesi yang menunggu catatan hasil.</p>@endif
                     </div>
 
                     <!-- Kategori Masalah (Pills) -->

@@ -26,6 +26,9 @@ class UpdateGuruRequest extends FormRequest
             'nama_lengkap' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $guru->user_id,
             'nip' => 'nullable|string|max:255',
+            'bidang_keahlian' => 'nullable|string|max:255',
+            'alamat' => 'sometimes|nullable|string|max:1000',
+            'no_hp' => 'sometimes|nullable|string|max:30',
             'password' => 'nullable|min:8'
         ];
     }

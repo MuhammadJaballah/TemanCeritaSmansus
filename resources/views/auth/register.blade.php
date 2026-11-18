@@ -16,15 +16,7 @@
             <x-input-error :messages="$errors->get('username')" class="mt-2" />
         </div>
 
-        <!-- Role -->
-        <div class="mt-4">
-            <x-input-label for="role" :value="__('Mendaftar Sebagai')" />
-            <select id="role" name="role" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required>
-                <option value="siswa" {{ old('role') == 'siswa' ? 'selected' : '' }}>Siswa</option>
-                <option value="guru" {{ old('role') == 'guru' ? 'selected' : '' }}>Guru BK</option>
-            </select>
-            <x-input-error :messages="$errors->get('role')" class="mt-2" />
-        </div>
+        <p class="mt-4 text-sm text-gray-600">Pendaftaran ini untuk siswa. Akun guru BK dibuat oleh admin sekolah.</p>
 
         <!-- Email Address -->
         <div class="mt-4">

@@ -1,0 +1,61 @@
+/* Shared appearance for dropdowns, calendars and time pickers. */
+.app-select.ts-wrapper { position: relative; width: 100%; font-family: inherit; }
+.app-select .ts-control,
+.app-select.single.input-active .ts-control {
+    min-height: 46px;
+    align-items: center;
+    gap: 0.25rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    background: #f8fafc;
+    padding: 0.7rem 2.5rem 0.7rem 0.875rem;
+    color: #334155;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    box-shadow: none;
+    cursor: pointer;
+}
+.app-select.single .ts-control:after {
+    right: 1rem;
+    border-width: 5px 5px 0;
+    border-color: #94a3b8 transparent transparent;
+}
+.app-select.single.dropdown-active .ts-control:after {
+    border-width: 0 5px 5px;
+    border-color: transparent transparent #2563eb;
+}
+.app-select.focus .ts-control, .app-select.dropdown-active .ts-control {
+    border-color: #3b82f6;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 15%);
+}
+.app-select .ts-control > input { font-size: 0.875rem !important; }
+.app-select .ts-dropdown {
+    z-index: 60;
+    margin-top: 0.4rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.875rem;
+    background: #fff;
+    box-shadow: 0 14px 32px rgb(15 23 42 / 14%);
+    font-family: inherit;
+    font-size: 0.875rem;
+}
+.app-select .ts-dropdown-content { max-height: 220px; padding: 0.35rem; }
+.app-select .ts-dropdown .option, .app-select .ts-dropdown .no-results { border-radius: 0.55rem; padding: 0.65rem 0.75rem; color: #475569; line-height: 1.4; }
+.app-select .ts-dropdown .active { background: #eff6ff; color: #1d4ed8; }
+.app-select .ts-dropdown .selected { font-weight: 600; }
+.app-select.disabled .ts-control { opacity: 0.6; }
+
+.app-picker { cursor: pointer; padding-right: 2.75rem !important; background-position: right 0.9rem center; background-repeat: no-repeat; background-size: 1.1rem; }
+.app-picker-date { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='1.8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z'/%3E%3C/svg%3E"); }
+.app-picker-time { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='1.8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M12 7v5l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E"); }
+.flatpickr-calendar { z-index: 100; border-radius: 1rem; box-shadow: 0 14px 32px rgb(15 23 42 / 16%); font-family: inherit; }
+.flatpickr-calendar.open { padding: 0.45rem 0; }
+.flatpickr-day { border-radius: 0.65rem; }
+.flatpickr-day.selected, .flatpickr-day.selected:hover { border-color: #2563eb; background: #2563eb; }
+.flatpickr-day.today { border-color: #93c5fd; }
+.flatpickr-time input { font-family: inherit; font-size: 0.875rem; }
+.app-picker-clear { display: block; margin: 0.35rem auto 0; border: 0; border-radius: 0.5rem; padding: 0.4rem 0.75rem; background: #eff6ff; color: #1d4ed8; font-size: 0.75rem; font-weight: 600; }
+.app-picker-clear:hover { background: #dbeafe; }
+.app-picker-clear:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }

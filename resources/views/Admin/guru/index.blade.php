@@ -48,29 +48,39 @@
     <div x-data="{
         createModal: false,
         editModal: false,
+        pencarian: '',
+        editBidangPilihan: '',
+        pilihanBidang: ['Psikologi anak', 'Jurusan dan karier', 'Prestasi dan akademik'],
         editForm: {
             id: '',
             nama_lengkap: '',
             email: '',
             nip: '',
+            bidang_keahlian: '',
+            alamat: '',
+            no_hp: '',
             password: ''
         },
-        openEdit(id, nama, email, nip) {
-            this.editForm.id = id;
-            this.editForm.nama_lengkap = nama;
-            this.editForm.email = email;
-            this.editForm.nip = nip;
+        openEdit(data) {
+            this.editForm.id = data.id;
+            this.editForm.nama_lengkap = data.nama;
+            this.editForm.email = data.email;
+            this.editForm.nip = data.nip;
+            this.editForm.bidang_keahlian = data.bidang;
+            this.editForm.alamat = data.alamat;
+            this.editForm.no_hp = data.noHp;
+            this.editBidangPilihan = !data.bidang ? '' : (this.pilihanBidang.includes(data.bidang) ? data.bidang : '__lainnya');
             this.editForm.password = '';
             this.editModal = true;
         }
     }">
         <x-card>
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <div>
                     <h3 class="text-lg font-bold text-gray-900">Data Guru BK</h3>
                     <p class="text-sm text-gray-500">Kelola profil Guru BK yang dapat menerima jadwal konseling.</p>
                 </div>
-                <button @click="createModal = true" class="px-4 py-2.5 bg-blue-600 text-white font-medium text-sm rounded-lg shadow-sm hover:bg-blue-700 transition flex items-center gap-2 shrink-0">
+                <button type="button" @click="createModal = true" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     Tambah Guru BK
                 </button>
@@ -79,46 +89,55 @@
             <div class="flex flex-col md:flex-row gap-4 mb-6">
                 <div class="relative flex-1">
                     <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <input type="text" placeholder="Cari nama guru BK..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    <input type="search" x-model="pencarian" aria-label="Cari nama guru BK" placeholder="Cari nama guru BK..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
                 </div>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full min-w-[760px] text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
                             <th class="p-4 rounded-tl-lg">Nama</th>
                             <th class="p-4">NIP</th>
+                            <th class="p-4">Bidang Layanan</th>
                             <th class="p-4">Email</th>
+                            <th class="p-4">No. HP</th>
+                            <th class="p-4">Alamat</th>
                             <th class="p-4">Status</th>
                             <th class="p-4 rounded-tr-lg">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody x-ref="barisGuru" class="divide-y divide-gray-100">
                         @forelse($gurus as $guru)
-                        <tr class="hover:bg-gray-50/50 transition">
+                        <tr class="hover:bg-gray-50/50 transition" data-nama="{{ $guru->nama_lengkap }}" x-show="$el.dataset.nama.toLocaleLowerCase().includes(pencarian.trim().toLocaleLowerCase())">
                             <td class="p-4">
                                 <h4 class="text-sm font-bold text-gray-900">{{ $guru->nama_lengkap }}</h4>
                             </td>
                             <td class="p-4 text-sm text-gray-500">{{ $guru->nip ?? '-' }}</td>
+                            <td class="p-4 text-sm text-gray-500">{{ $guru->bidang_keahlian ?: 'Belum diisi' }}</td>
                             <td class="p-4 text-sm text-gray-500">{{ $guru->user->email }}</td>
-                            <td class="p-4">
+                            <td class="p-4 text-sm text-gray-500 whitespace-nowrap">{{ $guru->no_hp ?: '-' }}</td>
+                            <td class="p-4 text-sm text-gray-500 min-w-[180px] whitespace-pre-line break-words">{{ $guru->alamat ?: '-' }}</td>
+                            <td class="p-4 align-middle">
                                 <span class="inline-flex px-2 py-1 text-[10px] font-bold bg-green-100 text-green-700 rounded-md">Aktif</span>
                             </td>
-                            <td class="p-4 flex items-center gap-2">
-                                <button @click="openEdit('{{ $guru->id }}', '{{ addslashes($guru->nama_lengkap) }}', '{{ addslashes($guru->user->email) }}', '{{ addslashes($guru->nip) }}')" class="px-4 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition">Edit</button>
+                            <td class="p-4 align-middle">
+                                <div class="flex items-center gap-2">
+                                <button type="button" data-id="{{ $guru->id }}" data-nama="{{ $guru->nama_lengkap }}" data-email="{{ $guru->user->email }}" data-nip="{{ $guru->nip }}" data-bidang="{{ $guru->bidang_keahlian }}" data-alamat="{{ $guru->alamat }}" data-no-hp="{{ $guru->no_hp }}" @click="openEdit($el.dataset)" class="rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">Edit</button>
                                 <form action="{{ route('admin.guru.destroy', $guru->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus guru ini?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="px-4 py-1.5 bg-blue-800 text-white text-xs font-medium rounded hover:bg-blue-900 transition">Hapus</button>
+                                    <button type="submit" class="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100">Hapus</button>
                                 </form>
+                                </div>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="p-4 text-center text-sm text-gray-500">Belum ada data Guru BK.</td>
+                            <td colspan="8" class="p-4 text-center text-sm text-gray-500">Belum ada data Guru BK.</td>
                         </tr>
                         @endforelse
+                        <tr x-cloak x-show="pencarian.trim() !== '' && !Array.from($refs.barisGuru.querySelectorAll('[data-nama]')).some(baris => baris.dataset.nama.toLocaleLowerCase().includes(pencarian.trim().toLocaleLowerCase()))"><td colspan="8" class="p-6 text-center text-sm text-gray-500">Tidak ada guru BK yang cocok dengan pencarian.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -126,7 +145,7 @@
 
         <!-- Create Modal -->
         <div x-show="createModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4" x-cloak style="display: none;">
-            <div class="bg-white rounded-xl shadow-xl w-[90%] md:w-[400px] overflow-hidden" @click.away="createModal = false">
+            <div role="dialog" aria-modal="true" aria-label="Tambah Guru BK" @keydown.escape.window="createModal = false" class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl" @click.away="createModal = false">
                 <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h3 class="text-base font-bold text-gray-900">Tambah Guru BK</h3>
                     <button @click="createModal = false" class="text-gray-400 hover:text-gray-600">
@@ -149,6 +168,19 @@
                             <input type="text" name="nip" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Bidang Layanan (Opsional)</label>
+                            <input type="text" name="bidang_keahlian" maxlength="255" list="bidang-layanan" placeholder="Contoh: psikologi anak, karier" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <p class="mt-1 text-xs text-gray-500">Tuliskan bidang layanan yang ditangani guru BK.</p>
+                        </div>
+                        <div>
+                            <label for="tambah-no-hp" class="block text-sm font-medium text-gray-700 mb-1">No. HP (Opsional)</label>
+                            <input id="tambah-no-hp" type="tel" name="no_hp" maxlength="30" autocomplete="tel" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="tambah-alamat" class="block text-sm font-medium text-gray-700 mb-1">Alamat (Opsional)</label>
+                            <textarea id="tambah-alamat" name="alamat" maxlength="1000" rows="2" autocomplete="street-address" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                             <input type="password" name="password" required class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
@@ -163,7 +195,7 @@
 
         <!-- Edit Modal -->
         <div x-show="editModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4" x-cloak style="display: none;">
-            <div class="bg-white rounded-xl shadow-xl w-[90%] md:w-[400px] overflow-hidden" @click.away="editModal = false">
+            <div role="dialog" aria-modal="true" aria-label="Edit Guru BK" @keydown.escape.window="editModal = false" class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl" @click.away="editModal = false">
                 <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h3 class="text-base font-bold text-gray-900">Edit Guru BK</h3>
                     <button @click="editModal = false" class="text-gray-400 hover:text-gray-600">
@@ -187,6 +219,29 @@
                             <input type="text" name="nip" x-model="editForm.nip" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
+                            <label for="edit-bidang-pilihan" class="block text-sm font-medium text-gray-700 mb-1">Bidang Layanan (Opsional)</label>
+                            <select id="edit-bidang-pilihan" x-model="editBidangPilihan" @change="editForm.bidang_keahlian = $event.target.value === '__lainnya' ? '' : $event.target.value" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Belum diisi</option>
+                                <option value="Psikologi anak">Psikologi anak</option>
+                                <option value="Jurusan dan karier">Jurusan dan karier</option>
+                                <option value="Prestasi dan akademik">Prestasi dan akademik</option>
+                                <option value="__lainnya">Lainnya</option>
+                            </select>
+                            <div x-show="editBidangPilihan === '__lainnya'" x-cloak class="mt-2">
+                                <label for="edit-bidang-lainnya" class="sr-only">Bidang layanan lainnya</label>
+                                <input id="edit-bidang-lainnya" type="text" x-model="editForm.bidang_keahlian" maxlength="255" placeholder="Tuliskan bidang layanan" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <input type="hidden" name="bidang_keahlian" :value="editForm.bidang_keahlian">
+                        </div>
+                        <div>
+                            <label for="edit-no-hp" class="block text-sm font-medium text-gray-700 mb-1">No. HP (Opsional)</label>
+                            <input id="edit-no-hp" type="tel" name="no_hp" x-model="editForm.no_hp" maxlength="30" autocomplete="tel" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="edit-alamat" class="block text-sm font-medium text-gray-700 mb-1">Alamat (Opsional)</label>
+                            <textarea id="edit-alamat" name="alamat" x-model="editForm.alamat" maxlength="1000" rows="2" autocomplete="street-address" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Password Baru <span class="text-gray-400 font-normal">(Kosongkan jika tidak diubah)</span></label>
                             <input type="password" name="password" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
@@ -198,5 +253,10 @@
                 </form>
             </div>
         </div>
+        <datalist id="bidang-layanan">
+            <option value="Psikologi anak"></option>
+            <option value="Jurusan dan karier"></option>
+            <option value="Prestasi dan akademik"></option>
+        </datalist>
     </div>
 </x-admin-layout>

@@ -10,9 +10,50 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\Admin\StoreSiswaRequest;
 use App\Http\Requests\Admin\UpdateSiswaRequest;
+use App\Services\ImportSiswaExcel;
+use Illuminate\Database\QueryException;
+use Illuminate\Validation\ValidationException;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class SiswaController extends Controller
 {
+    public function templateImport()
+    {
+        return response()->streamDownload(function () {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Data Siswa');
+            $sheet->fromArray(['nama_lengkap', 'email', 'nisn', 'kelas'], null, 'A1');
+            $sheet->getStyle('A1:D1')->getFont()->setBold(true);
+            $sheet->getStyle('C2:C1001')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
+            foreach (['A' => 28, 'B' => 34, 'C' => 20, 'D' => 20] as $column => $width) $sheet->getColumnDimension($column)->setWidth($width);
+            $sheet->freezePane('A2');
+            (new Xlsx($spreadsheet))->save('php://output');
+            $spreadsheet->disconnectWorksheets();
+        }, 'template_import_siswa.xlsx', ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+    }
+
+    public function import(Request $request, ImportSiswaExcel $importer)
+    {
+        $data = $request->validateWithBag('import', [
+            'file' => ['required', 'file', 'mimes:xlsx', 'max:2048'],
+            'password' => ['required', 'string', 'min:8', 'max:72'],
+        ]);
+        try {
+            $count = $importer->import($request->file('file'), $data['password']);
+        } catch (ValidationException $e) {
+            throw $e->errorBag('import');
+        } catch (QueryException $e) {
+            if (in_array((string) $e->getCode(), ['23000', '23505', '19'], true)) {
+                throw ValidationException::withMessages(['file' => 'Data bertabrakan dengan akun yang sudah ada. Periksa kembali email dan NISN, lalu coba lagi.'])->errorBag('import');
+            }
+            throw $e;
+        }
+        return redirect()->route('admin.siswa.index')->with('success', "$count data siswa berhasil diimpor.");
+    }
+
     /**
      * Display a listing of the resource.
      */

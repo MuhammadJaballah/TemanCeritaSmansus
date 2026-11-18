@@ -1,5 +1,5 @@
 @php
-    $layout = auth()->user()->role === 'admin' ? 'admin-layout' : (auth()->user()->role === 'guru' ? 'guru-layout' : 'app-layout');
+    $layout = auth()->user()->role === 'admin' ? 'admin-layout' : (auth()->user()->role === 'guru' ? 'guru-layout' : 'siswa-layout');
 @endphp
 
 <x-dynamic-component :component="$layout" headerTitle="Pengaturan Profil" headerSubtitle="Kelola detail profil dan keamanan akun Anda.">
@@ -39,6 +39,22 @@
                     <input id="email" name="email" type="email" class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" value="{{ old('email', $user->email) }}" required autocomplete="username" />
                     <x-input-error class="mt-2" :messages="$errors->get('email')" />
                 </div>
+
+                @if(in_array($user->role, ['guru', 'siswa'], true))
+                    @php
+                        $profilKontak = $user->role === 'guru' ? $user->guru : $user->siswa;
+                    @endphp
+                    <div>
+                        <label for="no_hp" class="block text-sm font-bold text-gray-800 mb-2">No. HP (Opsional)</label>
+                        <input id="no_hp" name="no_hp" type="tel" maxlength="30" autocomplete="tel" value="{{ old('no_hp', $profilKontak?->no_hp) }}" class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
+                        <x-input-error class="mt-2" :messages="$errors->get('no_hp')" />
+                    </div>
+                    <div>
+                        <label for="alamat" class="block text-sm font-bold text-gray-800 mb-2">Alamat (Opsional)</label>
+                        <textarea id="alamat" name="alamat" maxlength="1000" rows="3" autocomplete="street-address" class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">{{ old('alamat', $profilKontak?->alamat) }}</textarea>
+                        <x-input-error class="mt-2" :messages="$errors->get('alamat')" />
+                    </div>
+                @endif
 
                 <div class="pt-2">
                     <button type="submit" class="px-6 py-3 bg-[#0d47a1] text-white font-semibold text-sm rounded-xl hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 transition-all">

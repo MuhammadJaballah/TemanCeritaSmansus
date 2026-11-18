@@ -32,25 +32,42 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Chart Section -->
         <x-card class="lg:col-span-2">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-bold text-gray-900">Tren Layanan Konseling</h3>
-                <button class="px-4 py-1.5 bg-blue-50 text-blue-600 font-medium text-sm rounded-full">Refresh</button>
-            </div>
-            <div class="w-full h-72 border-l border-b border-gray-200 relative flex items-end opacity-70">
-                <!-- Placeholder for Line Chart -->
-                <div class="absolute inset-0 flex flex-col justify-between pt-2 pb-6 px-1">
-                    <div class="w-full h-px bg-gray-100"></div>
-                    <div class="w-full h-px bg-gray-100"></div>
-                    <div class="w-full h-px bg-gray-100"></div>
-                    <div class="w-full h-px bg-gray-100"></div>
-                    <div class="w-full h-px bg-gray-100"></div>
+            <div class="flex flex-wrap justify-between items-start gap-3 mb-5">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Tren Layanan Konseling</h3>
+                    <p class="mt-1 text-sm text-gray-500">Jumlah sesi selesai berdasarkan tanggal konseling selama 6 bulan terakhir.</p>
                 </div>
-                <div class="w-full h-48 bg-gradient-to-t from-blue-100 to-transparent relative z-10" style="clip-path: polygon(0 80%, 20% 60%, 40% 40%, 60% 50%, 80% 20%, 100% 10%, 100% 100%, 0 100%); border-top: 2px solid #2563eb;"></div>
-                
-                <div class="absolute bottom-0 w-full flex justify-between text-xs text-gray-400 mt-2 px-2 pb-1">
-                    <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>Mei</span><span>Jun</span>
-                </div>
+                <a href="{{ route('admin.dashboard') }}" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-medium text-sm rounded-full hover:bg-blue-100">Perbarui</a>
             </div>
+            @php
+                $nilaiMaksimum = max(1, collect($trenLayanan)->max('jumlah'));
+                $titikTren = collect($trenLayanan)->values()->map(fn ($bulan, $index) => [
+                    'x' => 50 + $index * 100,
+                    'y' => 150 - (120 * $bulan['jumlah'] / $nilaiMaksimum),
+                    'label' => $bulan['label'],
+                    'jumlah' => $bulan['jumlah'],
+                ]);
+                $garisTren = $titikTren->map(fn ($titik) => $titik['x'] . ',' . $titik['y'])->implode(' ');
+            @endphp
+            <figure aria-label="Grafik jumlah sesi konseling selesai per bulan">
+                <svg viewBox="0 0 600 170" preserveAspectRatio="none" class="w-full h-48 sm:h-56" role="img" aria-label="Tren sesi konseling selesai; jumlah tiap bulan tercantum di bawah grafik">
+                    <line x1="0" y1="30" x2="600" y2="30" stroke="#e2e8f0" stroke-dasharray="4 6" />
+                    <line x1="0" y1="90" x2="600" y2="90" stroke="#e2e8f0" stroke-dasharray="4 6" />
+                    <line x1="0" y1="150" x2="600" y2="150" stroke="#cbd5e1" />
+                    <polyline points="{{ $garisTren }}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                    @foreach($titikTren as $titik)
+                        <circle cx="{{ $titik['x'] }}" cy="{{ $titik['y'] }}" r="4" fill="#2563eb" stroke="white" stroke-width="2" vector-effect="non-scaling-stroke"><title>{{ $titik['label'] }}: {{ $titik['jumlah'] }} sesi selesai</title></circle>
+                    @endforeach
+                </svg>
+                <figcaption class="grid grid-cols-6 gap-1 text-center">
+                    @foreach($trenLayanan as $bulan)
+                        <div><span class="block text-xs text-gray-500">{{ $bulan['label'] }}</span><span class="mt-1 block text-sm font-bold text-blue-700">{{ $bulan['jumlah'] }} <span class="font-normal text-gray-500">sesi</span></span></div>
+                    @endforeach
+                </figcaption>
+                @if(collect($trenLayanan)->sum('jumlah') === 0)
+                    <p class="mt-4 text-center text-sm text-gray-500">Belum ada sesi konseling selesai dalam 6 bulan terakhir.</p>
+                @endif
+            </figure>
         </x-card>
 
         <!-- Recent Activity Section -->

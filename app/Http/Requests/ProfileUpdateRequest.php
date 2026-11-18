@@ -16,7 +16,7 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
@@ -27,5 +27,10 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
         ];
+        if (in_array($this->user()->role, ['guru', 'siswa'], true)) {
+            $rules['alamat'] = ['sometimes', 'nullable', 'string', 'max:1000'];
+            $rules['no_hp'] = ['sometimes', 'nullable', 'string', 'max:30'];
+        }
+        return $rules;
     }
 }

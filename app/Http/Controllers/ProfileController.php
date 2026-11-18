@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 
 class ProfileController extends Controller
 {
@@ -26,13 +28,26 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
-
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
-
-        $request->user()->save();
+        $validated = $request->validated();
+        DB::transaction(function () use ($request, $validated) {
+            $user = $request->user();
+            $user->fill(Arr::only($validated, ['name', 'email']));
+            if ($user->isDirty('email')) {
+                $user->email_verified_at = null;
+            }
+            $user->save();
+            if ($user->role === 'guru') {
+                $user->guru()->updateOrCreate([], array_merge(
+                    ['nama_lengkap' => $validated['name']],
+                    Arr::only($validated, ['alamat', 'no_hp'])
+                ));
+            } elseif ($user->role === 'siswa') {
+                $user->siswa()->updateOrCreate([], array_merge(
+                    ['nama_lengkap' => $validated['name']],
+                    Arr::only($validated, ['alamat', 'no_hp'])
+                ));
+            }
+        });
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

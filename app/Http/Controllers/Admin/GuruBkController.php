@@ -40,7 +40,10 @@ class GuruBkController extends Controller
         Guru::create([
             'user_id' => $user->id,
             'nama_lengkap' => $validated['nama_lengkap'],
-            'nip' => $validated['nip']
+            'nip' => $validated['nip'] ?? null,
+            'bidang_keahlian' => $validated['bidang_keahlian'] ?? null,
+            'alamat' => $validated['alamat'] ?? null,
+            'no_hp' => $validated['no_hp'] ?? null,
         ]);
 
         return redirect()->route('admin.guru.index')->with('success', 'Data Guru berhasil ditambahkan');
@@ -64,10 +67,11 @@ class GuruBkController extends Controller
         }
         $user->save();
 
-        $guru->update([
+        $guru->update(array_merge([
             'nama_lengkap' => $validated['nama_lengkap'],
-            'nip' => $validated['nip']
-        ]);
+            'nip' => $validated['nip'] ?? null,
+            'bidang_keahlian' => $validated['bidang_keahlian'] ?? null,
+        ], array_intersect_key($validated, array_flip(['alamat', 'no_hp']))));
 
         return redirect()->route('admin.guru.index')->with('success', 'Data Guru berhasil diperbarui');
     }

@@ -9,6 +9,48 @@ use App\Http\Requests\GuruBk\StoreHasilKonselingRequest;
 
 class HasilKonselingController extends Controller
 {
+    public function export()
+    {
+        $guruId = Auth::user()->guru->id;
+        $bookings = BookingKonseling::with(['siswa', 'jadwal'])
+            ->whereHas('jadwal', fn ($query) => $query->where('guru_id', $guruId))
+            ->latest()
+            ->get();
+
+        return response()->streamDownload(function () use ($bookings) {
+            $file = fopen('php://output', 'w');
+            // UTF-8 BOM helps spreadsheet applications display Indonesian text correctly.
+            fwrite($file, "\xEF\xBB\xBF");
+            fputcsv($file, ['Siswa', 'Kelas', 'Tanggal', 'Jam Mulai', 'Jam Selesai', 'Status', 'Kategori', 'Keluhan Awal', 'Catatan Hasil', 'Rating', 'Ulasan']);
+
+            foreach ($bookings as $booking) {
+                $fields = [
+                    $booking->siswa->nama_lengkap ?? '',
+                    $booking->siswa->kelas ?? '',
+                    $booking->jadwal->tanggal,
+                    $booking->jadwal->jam_mulai,
+                    $booking->jadwal->jam_selesai,
+                    $booking->jadwal->status,
+                    $booking->kategori_masalah,
+                    $booking->keluhan_awal,
+                    $booking->catatan_hasil,
+                    $booking->rating,
+                    $booking->ulasan,
+                ];
+
+                // Prevent text from being interpreted as a spreadsheet formula.
+                fputcsv($file, array_map(function ($value) {
+                    $value = (string) ($value ?? '');
+                    return preg_match('/^[\s]*[=+@\-]/u', $value) ? "'".$value : $value;
+                }, $fields));
+            }
+
+            fclose($file);
+        }, 'data_konseling_'.now()->format('Y-m-d').'.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
     public function index()
     {
         $guruId = Auth::user()->guru->id;
